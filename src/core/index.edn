@@ -1,7 +1,4 @@
-{:let []
-
- :document
- [:html
+[:html
   [:body
    [:div#id-example]
    [:div#id.class-example]
@@ -11,4 +8,4 @@
   [:style
    {:#id-example     {}
     :.class-example  {}
-    :.multiple-class {}}]]}
+    :.multiple-class {}}]]
