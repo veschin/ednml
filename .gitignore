@@ -19,3 +19,4 @@ pom.xml.asc
 /.lsp
 /build
 *.html
+index.edn

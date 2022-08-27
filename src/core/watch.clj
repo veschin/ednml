@@ -47,7 +47,7 @@
         (> (count args) 5)
         (println "Wrong number of arguments")
 
-        (apply #{"-c" "-w" "-h"} args)
+        :always
         (let [[cmd _ ipath _ opath] args]
           (case cmd
             "-h"
@@ -59,9 +59,3 @@
             "-w"
             (watch ipath opath)))))
     (println "No args")))
-
-(comment
-
-  (-main "-h")
-
-)
