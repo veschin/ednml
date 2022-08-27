@@ -1,6 +1,17 @@
 (ns core.ednml
   (:require [clojure.string :as string]
-            [css]))
+            [css]
+            [clojure.test :as t]))
+
+(defn throw! [message]
+  #?(:cljs (throw (js/Error. message))
+     :clj (throw (Exception. message))))
+
+(defmacro try! [body message]
+  `(try
+     ~body
+     #?(:cljs (catch js/Error _# ~message)
+        :clj (catch Exception _# ~message))))
 
 (def ->str #(str "\"" % "\""))
 
@@ -14,6 +25,9 @@
       (->> [key (cond
                   (= "style" key)
                   (->str (string/join " " (map css/prop<->value val)))
+
+                  (vector? val)
+                  (->str (string/join " " val))
 
                   (map? val)
                   (->str (->opts val))
@@ -32,40 +46,73 @@
            (filter some?)
            (string/join "="))))))
 
-(defn preprocess-tag [tag]
-  (let [tag-str (str tag ".")
-        tag (re-find #":\w+" tag-str)
-        id (re-find #"\#.*?[\.|\#]" tag-str)
-        classes (string/split "\." (re-seq #"\..*[\.|\#]" tag-str))]
-    [tag id classes])
-  )
+(defn delete-chars [s re] (string/replace s re ""))
 
-(preprocess-tag :div#id-example.class-example.multiple-class)
+(defn preprocess-tag [tag]
+  (if (<= (count (re-seq #"\#" (str tag))) 1)
+    (try!
+     (let [tag-str (str tag ".")
+           tag     (re-find #":.\w+" tag-str)
+           id      (or (re-find #"\#.*?[\.|\#]" tag-str) "")
+           classes (or (-> (cond-> tag-str
+                             (not-empty id)
+                             (string/replace id "."))
+                           (delete-chars tag)
+                           (string/split  #"\.")
+                           rest
+                           vec)
+                       nil)]
+       [(delete-chars tag #"^.")
+        (delete-chars id #"^.|.$")
+        classes])
+     {:error (str "Error while parse tag -> " tag)})
+     (throw! "Tag can have only one #id")))
+
+(defn prepare-opts [tag [opts & _]]
+  (let [[tag-
+         id-
+         classes-] (when (keyword? tag)
+                     (preprocess-tag tag))
+        id?        (not-empty id-)]
+    (when (and id? (:id opts)) (throw! "Tag can have only one #id"))
+    (let [opts (merge-with
+                vector
+                opts
+                (cond-> {}
+                  id?
+                  (assoc :id id-)
+
+                  (not-empty classes-)
+                  (assoc :class classes-)))]
+      [tag- (cond-> opts
+              (:class opts)
+              (update :class (comp vec flatten))
+
+              :always
+              ->opts)])))
 
 (defn ->tag
   [tag & children]
   (if (= :style tag)
-    (css/->style (first children))
-    (let [opts? (-> children first map?)
-          opts  (when opts? (->opts (first children)))
-          children- (string/join
-                     "\n"
-                     (cond
-                       (or (empty? children)
-                           (empty? (rest children)))
-                       nil
+    (str "<style>\n" (css/style-fn (first children)) "\n</style>\n")
+    (let [children    (cond->> children
+                        (-> children first map? not)
+                        (cons {}))
+          [tag- opts] (prepare-opts tag children)
+          children-   (string/join
+                       "\n"
+                       (cond
+                         (empty? (rest children))
+                         nil
 
-                       opts?
-                       (map ->tag (rest children))
-
-                       :else
-                       (map ->tag children)))]
+                         :else
+                         (map ->tag (rest children))))]
       (cond
         (keyword? tag)
         (str
-         "<"  (name tag) " " opts ">"
-         "\n" children-
-         "</" (name tag) ">")
+         "<"  (name tag-) " " opts ">"
+         "\n" children- "\n"
+         "</" (name tag-) ">\n")
 
         (string? tag)
         (->str tag)
@@ -76,29 +123,10 @@
         :else
         (apply ->tag tag)))))
 
+(defn doctype [type] (str "<!DOCTYPE " (name type) ">\n"))
 
-(comment
-
-  (->tag :div)
-  (apply ->tag [:div
-                ;; {:style {:color :red}}
-                ;; [:div "some"]
-                ;; [:style {:a {:some :a}}]
-                ])
-  (apply ->tag [:body
-                 [:div#id-example]
-                 [:div#id.class-example]
-                 [:div.class-example.multiple-class]
-                 [:div {:a 10} "some"]
-                 ;; [:div {} [:div "some2"]]
-                ])
-
-  (apply ->tag (clojure.edn/read-string (slurp "/home/veschin/work/ednml/src/core/index.edn")))
-  (->tag :div {} "some")
-  (->opts {:a    10
-           :b    true
-           :some :some-key
-           :href "src://some-src"})
-
-                                        ;
-  )
+(defn ->html
+  ([tags] (->html [:head [:title "Example page"] [:meta {:charset "UTF-8"}]] tags))
+  ([head tags]
+   (str (doctype :html)
+        (apply ->tag [:html head tags]))))
