@@ -17,3 +17,5 @@ pom.xml.asc
 /.cpcache
 /.clj-kondo
 /.lsp
+/build
+*.html
