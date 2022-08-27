@@ -58,3 +58,10 @@
 
   (t->tag [:div [:div "a" [:span "b"]] ]
          ["<div >" "<div >" "\"a\"" "<span >" "\"b\"" "</span>" "</div>" "</div>"]))
+
+(comment
+
+  (debug-tag [:i "1 2 3"])
+
+;
+  )

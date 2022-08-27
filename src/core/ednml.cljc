@@ -10,8 +10,8 @@
 (defmacro try! [body message]
   `(try
      ~body
-     #?(:cljs (catch js/Error _# ~message)
-        :clj (catch Exception _# ~message))))
+     #?(:cljs (catch js/Error _# (do (println ~message) ~message))
+        :clj (catch Exception _# (do (println ~message) ~message)))))
 
 (def ->str #(str "\"" % "\""))
 
@@ -52,7 +52,7 @@
   (if (<= (count (re-seq #"\#" (str tag))) 1)
     (try!
      (let [tag-str (str tag ".")
-           tag     (re-find #":.\w+" tag-str)
+           tag     (re-find #":\w+" tag-str)
            id      (or (re-find #"\#.*?[\.|\#]" tag-str) "")
            classes (or (-> (cond-> tag-str
                              (not-empty id)
@@ -93,35 +93,37 @@
 
 (defn ->tag
   [tag & children]
-  (if (= :style tag)
-    (str "<style>\n" (css/style-fn (first children)) "\n</style>\n")
-    (let [children    (cond->> children
-                        (-> children first map? not)
-                        (cons {}))
-          [tag- opts] (prepare-opts tag children)
-          children-   (string/join
-                       "\n"
-                       (cond
-                         (empty? (rest children))
-                         nil
+  (try!
+   (if (= :style tag)
+     (str "<style>\n" (css/style-fn (first children)) "\n</style>\n")
+     (let [children    (cond->> children
+                         (-> children first map? not)
+                         (cons {}))
+           [tag- opts] (prepare-opts tag children)
+           children-   (string/join
+                        "\n"
+                        (cond
+                          (empty? (rest children))
+                          nil
 
-                         :else
-                         (map ->tag (rest children))))]
-      (cond
-        (keyword? tag)
-        (str
-         "<"  (name tag-) " " opts ">"
-         "\n" children- "\n"
-         "</" (name tag-) ">\n")
+                          :else
+                          (map ->tag (rest children))))]
+       (cond
+         (keyword? tag)
+         (str
+          "<"  (name tag-) " " opts ">"
+          "\n" children- "\n"
+          "</" (name tag-) ">\n")
 
-        (string? tag)
-        (->str tag)
+         (string? tag)
+         (->str tag)
 
-        (number? tag)
-        tag
+         (number? tag)
+         tag
 
-        :else
-        (apply ->tag tag)))))
+         :else
+         (apply ->tag tag))))
+   (str "Error while parse tag -> " tag)))
 
 (defn doctype [type] (str "<!DOCTYPE " (name type) ">\n"))
 

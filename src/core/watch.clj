@@ -6,26 +6,27 @@
             [core.ednml]))
 
 (defn notify-user! [message]
-  (with-out-str (println message)))
+  (println message))
 
 (defn make-html-file [ipath opath]
   (let [input        (core.ednml/try!
                       (clojure.edn/read-string (slurp ipath))
                       (notify-user! "Wrong input file path\n"))
         html-content (core.ednml/->html input)]
-    (core.ednml/try!
-     (println "Compiled in"
-              (string/replace
-               (with-out-str (time (spit opath html-content)))
-               #"Elapsed time\:|\"" ""))
-      (notify-user! "Wrong output file path"))
-    :done))
+    (when input
+      (core.ednml/try!
+       (println "Compiled in"
+                (string/replace
+                 (with-out-str (time (spit opath html-content)))
+                 #"Elapsed time\:|\"" ""))
+       (notify-user! "Wrong output file path"))
+      :done)))
 
 (defn watch [ipath opath]
   (def watcher
     (hawk/watch!
      [{:paths [ipath]
-       :handler (constantly (make-html-file ipath opath))}])) )
+       :handler (fn [_ _] (make-html-file ipath opath))}])) )
 
 (defn help []
   (str
@@ -59,3 +60,11 @@
             "-w"
             (watch ipath opath)))))
     (println "No args")))
+
+(comment
+
+  (watch "index.edn" "new.html")
+  (make-html-file "index.edn" "new.html")
+(clojure.edn/read-string (slurp "index.edn"))
+  (hawk/stop! watcher)
+  )
