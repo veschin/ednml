@@ -1,3 +1,11 @@
-{:paths ["src" "test"]
- :deps  {veschin/css-to-edn {:git/url "https://github.com/veschin/edn-to-css.git"
-                             :sha     "b070b2828fc9498c2ef13932bdac07167d406de3"}}}
+{:paths   ["src" "test" "classes"]
+ :deps    {veschin/css-to-edn {:git/url "https://github.com/veschin/edn-to-css.git"
+                               :sha     "b070b2828fc9498c2ef13932bdac07167d406de3"}
+           hawk/hawk          {:mvn/version "0.2.11"}}
+ :aliases {:aot {:main-opts ["-e" "(compile,'core.watch)"]}
+           :uberdeps
+           {:replace-deps  {uberdeps/uberdeps {:mvn/version "1.1.4"}}
+            :replace-paths []
+            :main-opts     ["-m" "uberdeps.uberjar"
+                            "--target" "build/ednml.jar"
+                            "--main-class" "core.watch"]}}}
