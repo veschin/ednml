@@ -1,3 +1,3 @@
 {:paths ["src" "test"]
  :deps  {veschin/css-to-edn {:git/url "https://github.com/veschin/edn-to-css.git"
-                             :sha     "69b87d54bf60077bbacc6c9720968baf7c021a91"}}}
+                             :sha     "b070b2828fc9498c2ef13932bdac07167d406de3"}}}
