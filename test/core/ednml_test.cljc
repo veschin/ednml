@@ -57,7 +57,7 @@
          ["<style>" "#id {color: red;}" "</style>"])
 
   (t->tag [:div [:div "a" [:span "b"]] ]
-         ["<div >" "<div >" "\"a\"" "<span >" "\"b\"" "</span>" "</div>" "</div>"]))
+         ["<div >" "<div >" "a" "<span >" "b" "</span>" "</div>" "</div>"]))
 
 (comment
 

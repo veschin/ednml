@@ -116,7 +116,7 @@
           "</" (name tag-) ">\n")
 
          (string? tag)
-         (->str tag)
+         tag
 
          (number? tag)
          tag
