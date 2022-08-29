@@ -128,7 +128,7 @@
 (defn doctype [type] (str "<!DOCTYPE " (name type) ">\n"))
 
 (defn ->html
-  ([tags] (->html [:head [:title "Example page"] [:meta {:charset "UTF-8"}]] tags))
+  ([tags] (->html [:head #_[:title "Example page"] [:meta {:charset "UTF-8"}]] tags))
   ([head tags]
    (str (doctype :html)
         (apply ->tag [:html head tags]))))

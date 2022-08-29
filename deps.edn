@@ -1,6 +1,6 @@
 {:paths   ["src" "test" "classes"]
  :deps    {veschin/css-to-edn {:git/url "https://github.com/veschin/edn-to-css.git"
-                               :sha     "b070b2828fc9498c2ef13932bdac07167d406de3"}
+                               :sha     "92744a61fa63e34d3c9129c660beb7cd191803ba"}
            hawk/hawk          {:mvn/version "0.2.11"}}
  :aliases {:aot {:main-opts ["-e" "(compile,'core.watch)"]}
            :uberdeps
